@@ -76,8 +76,6 @@ class AngularPowerSpectrum_to_CorrelationFunction(LikelihoodModule):
 
         for (i,j) in self.all_spectra.get("w_theta", []):
             if i == j:
-                n_bins = self.observed_data_vector.spectrum_info["w_theta"]["n_bins1_tot"]
-                flat_idx = i * n_bins + j
                 C_dd_ii = state[f"c_dd{self.cl_tag}"][i, :]
                 C_dd_interp = jnp.interp(ell_w, self.ell, C_dd_ii)
                 w_theta_ii = jnp.sum(w_kernel * C_dd_interp[:, jnp.newaxis], axis=0)
@@ -101,9 +99,6 @@ class AngularPowerSpectrum_to_CorrelationFunction(LikelihoodModule):
             xi_neg_ij = jnp.sum(xi_neg_kernel * (C_EE_interp - C_BB_interp)[:, jnp.newaxis], axis=0)
             state[f"xi_pos_{i}_{j}_obs"] = xi_pos_ij
             state[f"xi_neg_{i}_{j}_obs"] = xi_neg_ij
-        # Add temporarily to compute() in AngularPowerSpectrum_to_CorrelationFunction.py
-        # right after the cl_tag lookup:
-        c_kk = state[f"c_kk{self.cl_tag}"]
         return state
 
     def get_model_from_state(self, state):

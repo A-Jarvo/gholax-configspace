@@ -84,16 +84,6 @@ class Nx2PTCorrelationFunction(GaussianLikelihood):
                 self.observed_data_vector.spectrum_info[ft]["bin_pairs"] = [(i, j) for i in bins for j in bins]
         
         
-        # Then for observed_data_vector (used by Limber and ProjectionKernels):
-        for ft in fourier_spectrum_types:
-            if ft not in self.observed_data_vector.spectrum_info:
-                self.observed_data_vector.spectrum_info[ft] = dict(fourier_spectrum_info[ft])
-            self.observed_data_vector.spectrum_info[ft]["use_cross"] = True  # ← True for Limber
-            if ft == "c_dd":
-                bins = list(fourier_spectrum_info[ft]["bins0"])
-                self.observed_data_vector.spectrum_info[ft]["bin_pairs"] = [
-                    (i, j) for i in bins for j in bins
-                ]
         # Add dummy c_dd to satisfy RealSpaceBiasExpansion's hardcoded check
         # without triggering p_gg computation
         if "c_dd" not in fourier_spectrum_info:
