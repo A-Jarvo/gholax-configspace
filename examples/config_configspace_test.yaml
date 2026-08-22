@@ -52,6 +52,30 @@ likelihood:
       value: 0.0
     b_3_1:
       value: 0.0
+    b_ka_0:
+      value: 0.0
+    b_ka_1:
+      value: 0.0
+    b_kx_0:
+      value: 0.0
+    b_kx_1:
+      value: 0.0
+    b_kma_0:
+      value: 0.0
+    b_kma_1:
+      value: 0.0
+    b_kma_2:
+      value: 0.0
+    b_kma_3:
+      value: 0.0
+    r_pade_0:
+      value: 1.0
+    r_pade_1:
+      value: 1.0
+    r_pade_2:
+      value: 1.0
+    r_pade_3:
+      value: 1.0
 
     # Magnification (2 lens bins)
     smag_0:
@@ -141,20 +165,14 @@ likelihood:
     params: {}
     analytic_marginalization: false
     zmin_proj: 0.1
+    zmax_proj: 1.5
     use_boltzmann: true
     data_vector:
-      data_vector_info_filename: dummy_configspace_dv.h5
+      data_vector_info_filename: examples/dummy_configspace_dv.h5
+      scale_cuts: null
       dummy_cov: false
       zeff_weighting: false
       spectrum_info:
-        w_theta:
-          bins0: [0, 1]
-          bins1: [0, 1]
-          use_cross: false
-        gamma_t:
-          bins0: [0, 1]
-          bins1: [0, 1]
-          use_cross: true
         xi_plus:
           bins0: [0, 1]
           bins1: [0, 1]
@@ -177,18 +195,19 @@ theory:
 
   RealSpaceMatterPowerSpectrum:
     use_emulator: false
+    use_boltzmann: true
 
   RealSpaceBiasedTracerSpectra:
-    bias_model: linear
+    bias_model: cleft
     use_emulator: false
 
   RealSpaceBiasExpansion:
+    bias_model: cleft
     baryon_z_evolution_model: spline
     p_mm_ct_order: 1
     p_mm_ct_pade: true
     spline_N: 3
     spline_Delta: 0.6
-    bias_model: linear
     scale_by_s8z: true
     p_mm_uv_behavior: dmo
 
@@ -199,10 +218,11 @@ theory:
     use_emulator: false
 
   RealSpaceIAExpansion:
-    z_evolution_model: scalar_bias
+    z_evolution_model: powerlaw
     scale_by_s8z: false
     include_magnification_x_ia: false
     no_ia: true
+    zeff_weighting: false
 
 projection:
   k_cutoff: 2.0
@@ -213,6 +233,7 @@ projection:
   Limber:
     non_parametric_growth: false
     k_cutoff: null
+    no_ia: true
   AngularPowerSpectrum_to_CorrelationFunction: {}
 
 sampler:

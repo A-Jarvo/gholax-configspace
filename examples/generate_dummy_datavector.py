@@ -69,18 +69,28 @@ for i in range(N_LENS_BINS):
     for j in range(N_SOURCE_BINS):
         for th in theta_centers:
             rows.append((b"gamma_t", i, j, th, 1e-5))
+    
+# Load theory model vector
+theory = np.loadtxt('examples/a.txt').flatten()
+print(f"theory shape: {theory.shape}")  # should be (120,)
+xi_plus_theory  = theory[:60].reshape(3, N_THETA)
+xi_minus_theory = theory[60:].reshape(3, N_THETA)
 
 # xi_plus: upper triangle of source bins
+pair_idx = 0
 for i in range(N_SOURCE_BINS):
     for j in range(i, N_SOURCE_BINS):
-        for th in theta_centers:
-            rows.append((b"xi_plus", i, j, th, 1e-5))
+        for t_idx, th in enumerate(theta_centers):
+            rows.append((b"xi_plus", i, j, th, float(xi_plus_theory[pair_idx, t_idx])))
+        pair_idx += 1
 
 # xi_minus: upper triangle of source bins
+pair_idx = 0
 for i in range(N_SOURCE_BINS):
     for j in range(i, N_SOURCE_BINS):
-        for th in theta_centers:
-            rows.append((b"xi_minus", i, j, th, 5e-6))
+        for t_idx, th in enumerate(theta_centers):
+            rows.append((b"xi_minus", i, j, th, float(xi_minus_theory[pair_idx, t_idx])))
+        pair_idx += 1
 
 spectra = np.array(rows, dtype=dt)
 n_dv = len(spectra)
@@ -111,8 +121,7 @@ for ii in range(n_dv):
         cov[ii, jj]["separation0"] = spectra[ii]["separation"]
         cov[ii, jj]["separation1"] = spectra[jj]["separation"]
         if ii == jj:
-            # 10% relative error on diagonal
-            cov[ii, jj]["value"] = (0.1 * abs(spectra[ii]["value"]))**2 + 1e-20
+            cov[ii, jj]["value"] = (1.0 * abs(spectra[ii]["value"]))**2 + 1e-30
 
 # ---- Write HDF5 ----
 outfile = "dummy_configspace_dv.h5"
