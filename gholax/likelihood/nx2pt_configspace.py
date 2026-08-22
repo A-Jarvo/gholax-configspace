@@ -58,14 +58,54 @@ class Nx2PTCorrelationFunction(GaussianLikelihood):
             "xi_plus": "c_kk",
             "xi_minus": "c_kk",
         }
-        fourier_spectrum_types = []
+        fourier_spectrum_types = []        # without c_dd, for RealSpaceBiasExpansion
+        fourier_spectrum_types_limber = [] # with c_dd, for Limber/ProjectionKernels
         fourier_spectrum_info = {}
+        
         for t in spectrum_types:
             ft = type_map[t]
-            if ft not in fourier_spectrum_types:
-                fourier_spectrum_types.append(ft)
+            if ft not in fourier_spectrum_types_limber:
+                fourier_spectrum_types_limber.append(ft)
                 fourier_spectrum_info[ft] = dict(spectrum_info[t])
-                fourier_spectrum_info[ft]["use_cross"] = (ft != "c_dd")
+                fourier_spectrum_info[ft]["use_cross"] = True
+                if ft == "c_dd":
+                    bins = list(fourier_spectrum_info[ft]["bins0"])
+                    fourier_spectrum_info[ft]["bin_pairs"] = [(i, j) for i in bins for j in bins]
+                else:
+                    fourier_spectrum_types.append(ft)
+        
+        # Update observed_data_vector for Limber/ProjectionKernels
+        for ft in fourier_spectrum_types_limber:
+            if ft not in self.observed_data_vector.spectrum_info:
+                self.observed_data_vector.spectrum_info[ft] = dict(fourier_spectrum_info[ft])
+            self.observed_data_vector.spectrum_info[ft]["use_cross"] = True
+            if ft == "c_dd":
+                bins = list(fourier_spectrum_info[ft]["bins0"])
+                self.observed_data_vector.spectrum_info[ft]["bin_pairs"] = [(i, j) for i in bins for j in bins]
+        
+        
+        # Then for observed_data_vector (used by Limber and ProjectionKernels):
+        for ft in fourier_spectrum_types:
+            if ft not in self.observed_data_vector.spectrum_info:
+                self.observed_data_vector.spectrum_info[ft] = dict(fourier_spectrum_info[ft])
+            self.observed_data_vector.spectrum_info[ft]["use_cross"] = True  # ← True for Limber
+            if ft == "c_dd":
+                bins = list(fourier_spectrum_info[ft]["bins0"])
+                self.observed_data_vector.spectrum_info[ft]["bin_pairs"] = [
+                    (i, j) for i in bins for j in bins
+                ]
+        # Add dummy c_dd to satisfy RealSpaceBiasExpansion's hardcoded check
+        # without triggering p_gg computation
+        if "c_dd" not in fourier_spectrum_info:
+            fourier_spectrum_info["c_dd"] = {"use_cross": False, "bin_pairs": []}
+        if "c_dk" not in fourier_spectrum_info:
+            fourier_spectrum_info["c_dk"] = {"use_cross": False, "bin_pairs": []}
+
+        self.configspace_spectrum_types = list(self.observed_data_vector.spectrum_types)
+        # Update spectrum_types on data vector so ProjectionKernels computes the right kernels
+        self.observed_data_vector.spectrum_types = (
+            list(self.observed_data_vector.spectrum_types) + fourier_spectrum_types
+        )
 
         if self.use_boltzmann:
             self.likelihood_pipeline = [
@@ -79,11 +119,6 @@ class Nx2PTCorrelationFunction(GaussianLikelihood):
             ]
         else:
             self.likelihood_pipeline = []
-
-
-        print("fourier_spectrum_types:", fourier_spectrum_types)
-        print("fourier_spectrum_info keys:", {t: list(fourier_spectrum_info[t].keys()) for t in fourier_spectrum_info})
-        print("bins0 types:", {t: type(fourier_spectrum_info[t]["bins0"]) for t in fourier_spectrum_info})
 
         self.likelihood_pipeline.extend(
             [
@@ -138,8 +173,8 @@ class Nx2PTCorrelationFunction(GaussianLikelihood):
                 ),  # this one saves p_ij
                 RealSpaceBiasExpansion(
                     self.observed_data_vector,
-                    spectrum_types,
-                    spectrum_info,
+                    fourier_spectrum_types,
+                    fourier_spectrum_info,
                     zmin=self.zmin_pk,
                     zmax=self.zmax_pk,
                     nz=self.nz_pk,
@@ -167,22 +202,9 @@ class Nx2PTCorrelationFunction(GaussianLikelihood):
                     nk=self.nk,
                     **config_theory.get("ShapeShapeIA", {}),
                 ),
-
-                RealSpaceIAExpansion(
-                    self.observed_data_vector,
-                    fourier_spectrum_types,
-                    fourier_spectrum_info,
-                    zmin=self.zmin_pk,
-                    zmax=self.zmax_pk,
-                    nz=self.nz_pk,
-                    kmin=self.kmin,
-                    kmax=self.kmax,
-                    nk=self.nk,
-                    **config_theory.get("RealSpaceIAExpansion", {}),
-                ),
                 Limber(
                     self.observed_data_vector,
-                    fourier_spectrum_types,
+                    fourier_spectrum_types_limber,
                     fourier_spectrum_info,
                     zmin_proj=self.zmin_proj,
                     zmax_proj=self.zmax_proj,
@@ -197,9 +219,10 @@ class Nx2PTCorrelationFunction(GaussianLikelihood):
                     l_max=l_max,
                     **config_proj.get("Limber", {}),
                 ),
+                
                 LensingCounterterm(
                     self.observed_data_vector,
-                    fourier_spectrum_types,
+                    fourier_spectrum_types_limber,
                     fourier_spectrum_info,
                     zmin_proj=self.zmin_proj,
                     zmax_proj=self.zmax_proj,
@@ -217,7 +240,7 @@ class Nx2PTCorrelationFunction(GaussianLikelihood):
                 ),
                 ShearMultiplicativeBias(
                     self.observed_data_vector,
-                    fourier_spectrum_types,
+                    fourier_spectrum_types_limber,
                     fourier_spectrum_info,
                     **config_proj.get("ShearMultiplicativeBias", {}),
                 ),
@@ -231,6 +254,23 @@ class Nx2PTCorrelationFunction(GaussianLikelihood):
                 ),
             ]
         )
+
+        no_ia = config_theory.get("RealSpaceIAExpansion", {}).get("no_ia", False)
+        if not no_ia:
+            self.likelihood_pipeline.extend(
+                RealSpaceIAExpansion(
+                            self.observed_data_vector,
+                            fourier_spectrum_types_limber,
+                            fourier_spectrum_info,
+                            zmin=self.zmin_pk,
+                            zmax=self.zmax_pk,
+                            nz=self.nz_pk,
+                            kmin=self.kmin,
+                            kmax=self.kmax,
+                            nk=self.nk,
+                            **config_theory.get("RealSpaceIAExpansion", {}),
+                        ),
+            )
 
         self.n_modules = len(self.likelihood_pipeline)
 
@@ -260,7 +300,7 @@ class Nx2PTCorrelationFunction(GaussianLikelihood):
             "xi_minus": "xi_neg",
         }
         model = []
-        for t in self.observed_data_vector.spectrum_types:
+        for t in self.configspace_spectrum_types:
             cf_key = cf_keys[t]
             for (i, j) in self.all_spectra[t]:
                 model.append(state[f"{cf_key}_{i}_{j}_obs"])

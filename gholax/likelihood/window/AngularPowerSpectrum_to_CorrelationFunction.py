@@ -72,28 +72,39 @@ class AngularPowerSpectrum_to_CorrelationFunction(LikelihoodModule):
         xi_pos_kernel, xi_neg_kernel = build_xi_kernels(P_ell_theta, dP_ell_theta, mu, self.l_max)
         ell_xi = jnp.arange(2, self.l_max+1)
 
-        for (i,j) in self.all_spectra["w_theta"]:
+        
+
+        for (i,j) in self.all_spectra.get("w_theta", []):
             if i == j:
-                C_dd_ii = state[f"c_dd_{i}_{i}{self.cl_tag}"]
+                n_bins = self.observed_data_vector.spectrum_info["w_theta"]["n_bins1_tot"]
+                flat_idx = i * n_bins + j
+                C_dd_ii = state[f"c_dd{self.cl_tag}"][i, :]
                 C_dd_interp = jnp.interp(ell_w, self.ell, C_dd_ii)
                 w_theta_ii = jnp.sum(w_kernel * C_dd_interp[:, jnp.newaxis], axis=0)
                 state[f"w_{i}_{i}_obs"] = w_theta_ii
-        for (i,j) in self.all_spectra["gamma_t"]:
-            C_dk_ij = state[f"c_dk_{i}_{j}{self.cl_tag}"]
+        for (i,j) in self.all_spectra.get("gamma_t", []):
+            n_bins = self.observed_data_vector.spectrum_info["gamma_t"]["n_bins1_tot"]
+            flat_idx = i * n_bins + j
+            C_dk_ij = state[f"c_dk{self.cl_tag}"][flat_idx, :]
             C_dk_interp = jnp.interp(ell_gamma, self.ell, C_dk_ij)
             gamma_theta_ij = jnp.sum(gamma_kernel * C_dk_interp[:, jnp.newaxis], axis=0)
             state[f"gamma_{i}_{j}_obs"] = gamma_theta_ij
-        for (i,j) in self.all_spectra["xi_plus"]:
-            C_EE_ij = state[f"c_kk_{i}_{j}{self.cl_tag}"]
+        for (i,j) in self.all_spectra.get("xi_plus", []):
+            n_bins = self.observed_data_vector.spectrum_info["xi_plus"]["n_bins1_tot"]
+            flat_idx = i * n_bins + j
+            C_EE_ij = state[f"c_kk{self.cl_tag}"][flat_idx, :]
+            C_BB_ij = state.get(f"c_bb{self.cl_tag}", jnp.zeros_like(state[f"c_kk{self.cl_tag}"]))[flat_idx, :]
             C_EE_interp = jnp.interp(ell_xi, self.ell, C_EE_ij)
-            C_BB_ij = state.get(f"c_bb_{i}_{j}{self.cl_tag}", jnp.zeros_like(C_EE_ij))
             C_BB_interp = jnp.interp(ell_xi, self.ell, C_BB_ij)
 
             xi_pos_ij = jnp.sum(xi_pos_kernel * (C_EE_interp + C_BB_interp)[:, jnp.newaxis], axis=0)
             xi_neg_ij = jnp.sum(xi_neg_kernel * (C_EE_interp - C_BB_interp)[:, jnp.newaxis], axis=0)
             state[f"xi_pos_{i}_{j}_obs"] = xi_pos_ij
             state[f"xi_neg_{i}_{j}_obs"] = xi_neg_ij
-        return state  # ← add this as the last line of compute()
+        # Add temporarily to compute() in AngularPowerSpectrum_to_CorrelationFunction.py
+        # right after the cl_tag lookup:
+        c_kk = state[f"c_kk{self.cl_tag}"]
+        return state
 
     def get_model_from_state(self, state):
         cf_keys = {
@@ -185,7 +196,6 @@ def G_posneg_bar(mu: jnp.array, P_l: jnp.array, dP_l: jnp.array, l_max: int):
     l_sub1_slice = slice(1,-2) # skip first element as it corresponds to l=0 and only use l>=1
     l_slice = slice(2, -1)
     l_add1_slice = slice(3, None)
-    print(f"mu min: {jnp.min(mu)}, mu max: {jnp.max(mu)}")  # add this
     assert not jnp.any(jnp.abs(mu) >= 1.0)
 
     P_diff = lambda P, l_slice: P[l_slice, theta_mins_slice] - P[l_slice, theta_maxs_slice]
