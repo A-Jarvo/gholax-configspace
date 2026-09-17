@@ -4,9 +4,9 @@ Produces a file with w_theta, gamma_t, xi_plus, xi_minus spectra,
 Gaussian n(z) for lens and source bins, and a diagonal covariance.
 
 Run with:
-    python generate_dummy_datavector.py
+    python examples/generate_dummy_datavector.py
 Output:
-    dummy_configspace_dv.h5
+    examples/dummy_configspace_dv.h5
 """
 import numpy as np
 import h5py
@@ -161,7 +161,7 @@ for ii in range(n_dv):
             cov[ii, jj]["value"] = (1.0 * abs(spectra[ii]["value"]))**2 + 1e-30
 
 # ---- Write HDF5 ----
-outfile = "dummy_configspace_dv.h5"
+outfile = "examples/dummy_configspace_dv.h5"
 with h5py.File(outfile, "w") as f:
     f.create_dataset("spectra",    data=spectra)
     f.create_dataset("covariance", data=cov.flatten())
