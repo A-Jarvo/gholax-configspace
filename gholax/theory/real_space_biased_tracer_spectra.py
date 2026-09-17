@@ -326,7 +326,7 @@ class RealSpaceBiasedTracerSpectra(LikelihoodModule):
             for j, k in enumerate(self.k):
                 pk_m[i, j] = boltz.pk(k * h, z) * h**3
 
-        state["p_11_real_space_bias_grid"] = pk_m.T
+        state["p_11_real_space_bias_grid"] = pk_m
 
         return state
 
@@ -962,8 +962,8 @@ def combine_real_space_gg_cross_spectra(
         bs_a * bs_b,
         bk2_a + bk2_b,
         bk2_a * b1_b + bk2_b * b1_a,
-        0.5 * (bk2_a * b2_a + bk2_b * b2_b),
-        (bk2_a * bs_b + bk2_b + bs_a),
+        0.5 * (bk2_a * b2_b + bk2_b * b2_a),
+        (bk2_a * bs_b + bk2_b * bs_a),
     ]
 
     nabla_idx = (2, 4, 7, 11)

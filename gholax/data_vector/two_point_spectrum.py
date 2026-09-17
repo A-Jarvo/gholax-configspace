@@ -1,4 +1,3 @@
-import warnings
 
 import h5py as h5
 import jax.numpy as jnp
@@ -49,6 +48,15 @@ field_types = {
 
 
 class TwoPointSpectrum(DataVector):
+    """Data vector for two-point angular power spectra (C_ell).
+
+    Handles loading observed spectra and covariance from HDF5, applying
+    scale cuts, computing Gaussian covariance matrices, interpolating
+    redshift distributions, and managing bandpower window functions.
+    """
+
+    _field_types = field_types
+
     def __init__(
         self,
         data_vector_info_filename,
@@ -72,17 +80,31 @@ class TwoPointSpectrum(DataVector):
         self.covariance_info = covariance_info
         self.z = jnp.linspace(zmin, zmax, nz)
 
-    def load_data(self):
-        self.load_data_vector()
-        self.load_requirements()
-        self.setup_scale_cuts()
+    def _compute_ell_binning(self):
+        """Compute the bandpower ell_eff and delta_ell arrays and store them as
+        instance attributes.  Returns the bpws index array so callers that also
+        need to build a window matrix can reuse it."""
+        ells = np.arange(3 * 2048, dtype="int32")
+        bpws = np.zeros_like(ells) - 1
 
-        if not self.dummy_cov:
-            self.load_covariance_matrix()
-        else:
-            self.cinv = None
+        i = 0
+        counter = 25  # ell_start
+        delta_ell = int(3 * np.sqrt(counter))
+        bpw_widths = [delta_ell]
 
-    #        print(self.cW, flush=True)
+        while counter + delta_ell < ells.shape[0]:
+            bpws[counter : counter + delta_ell] = i
+            counter = counter + delta_ell
+            delta_ell = int(3 * np.sqrt(ells[counter]))
+            bpw_widths.append(delta_ell)
+            i += 1
+
+        self.delta_ell = np.array(bpw_widths)[:-1]
+        ell_eff = np.bincount(bpws + 1, weights=ells * (2 * ells + 1)) / np.bincount(
+            bpws + 1, weights=(2 * ells + 1)
+        )
+        self.ell_eff = ell_eff[1:]
+        return bpws
 
     def generate_data(self):
         required_spectra = []
@@ -180,119 +202,6 @@ class TwoPointSpectrum(DataVector):
 
         return spectra
 
-    def process_spectrum_info(self, spectra):
-        self.spectra = []
-        for t in self.spectrum_types:
-            n_bins0_tot = len(
-                np.unique(spectra[spectra["spectrum_type"] == t.encode('utf-8')]["zbin0"])
-            )
-            n_bins1_tot = len(
-                np.unique(spectra[spectra["spectrum_type"] == t.encode('utf-8')]["zbin1"])
-            )
-            if "use_cross" not in self.spectrum_info[t]:
-                self.spectrum_info[t]["use_cross"] = True
-
-            if "bins0" not in self.spectrum_info[t]:
-                warnings.warn(
-                    f"bins0 not specified for spectrum type {t}, using all bin0 in file",
-                    UserWarning,
-                )
-                self.spectrum_info[t]["bins0"] = np.unique(
-                    spectra[spectra["spectrum_type"] == t.encode('utf-8')]["zbin0"]
-                )
-
-            if "bins1" not in self.spectrum_info[t]:
-                warnings.warn(
-                    f"bins1 not specified for spectrum type {t}, using all bin1 in file",
-                    UserWarning,
-                )
-                self.spectrum_info[t]["bins1"] = np.unique(
-                    spectra[spectra["spectrum_type"] == t.encode('utf-8')]["zbin1"]
-                )
-
-            if not self.spectrum_info[t]["use_cross"]:
-                assert np.all(
-                    self.spectrum_info[t]["bins0"] == self.spectrum_info[t]["bins1"]
-                )
-
-            # get rid of bins we don't want
-            if self.spectrum_info[t]["use_cross"]:
-                idx = (
-                    (spectra["spectrum_type"] == t.encode('utf-8'))
-                    & (np.in1d(spectra["zbin0"], self.spectrum_info[t]["bins0"]))
-                    & (np.in1d(spectra["zbin1"], self.spectrum_info[t]["bins1"]))
-                )
-                self.spectra.append(spectra[idx])
-            else:
-                for ii, i in enumerate(self.spectrum_info[t]["bins0"]):
-                    if ii == 0:
-                        idx = (
-                            (spectra["spectrum_type"] == t.encode('utf-8'))
-                            & (spectra["zbin0"] == i)
-                            & (spectra["zbin1"] == i)
-                        )
-                    else:
-                        idx |= (
-                            (spectra["spectrum_type"] == t.encode('utf-8'))
-                            & (spectra["zbin0"] == i)
-                            & (spectra["zbin1"] == i)
-                        )
-
-                self.spectra.append(spectra[idx])
-
-            self.spectrum_info[t]["bin_pairs"] = []
-            for i in self.spectrum_info[t]["bins0"]:
-                if self.spectrum_info[t]["use_cross"]:
-                    for j in self.spectrum_info[t]["bins1"]:
-                        idx = (
-                            (spectra["spectrum_type"] == t.encode('utf-8'))
-                            & (spectra["zbin0"] == i)
-                            & (spectra["zbin1"] == j)
-                        )
-                        if np.sum(idx) > 0:
-                            self.spectrum_info[t]["bin_pairs"].append((i, j))
-                else:
-                    j = i
-                    idx = (
-                        (spectra["spectrum_type"] == t.encode('utf-8'))
-                        & (spectra["zbin0"] == i)
-                        & (spectra["zbin1"] == j)
-                    )
-                    if np.sum(idx) > 0:
-                        self.spectrum_info[t]["bin_pairs"].append((i, j))
-
-            idx = spectra["spectrum_type"] == t.encode('utf-8')
-            z0 = spectra["zbin0"][idx][0]
-            z1 = spectra["zbin1"][idx][0]
-            idx &= (spectra["zbin0"] == z0) & (spectra["zbin1"] == z1)
-            ndv_per_bin = np.sum(idx)
-            sep_unmasked = spectra[idx]["separation"]
-
-            self.spectrum_info[t].update(
-                {
-                    "n_dv_per_bin": ndv_per_bin,
-                    "separation": sep_unmasked,
-                    "n_bins0_tot": n_bins0_tot,
-                    "n_bins1_tot": n_bins1_tot,
-                }
-            )
-
-        self.spectra = np.hstack(self.spectra)
-        self.spectrum_values = jnp.array(self.spectra["value"])
-        self.n_dv = len(self.spectra)
-
-    def load_data_vector(self):
-        """Loads the required data."""
-
-        self.data_vector_info = h5.File(self.data_vector_info_filename, "r")
-
-        if not self.generate_data_vector:
-            spectra = self.data_vector_info["spectra"][:]
-        else:
-            spectra = self.generate_data()
-
-        self.process_spectrum_info(spectra)
-        
     def save_data_vector(self, filename, model):
         with h5.File(filename, "w") as f:
             dt = np.dtype(
@@ -368,152 +277,65 @@ class TwoPointSpectrum(DataVector):
                 for ij in list(window_matrix_files[k].keys()):
                     self.cW[k][ij] = window_matrix_files[k][ij][:]
 
-    def setup_scale_cuts(self):
-        # make scale cut mask
-        if self.scale_cuts is not None:
-            for t in self.spectrum_info:
-                if t in self.scale_cuts:
-                    scale_cut_dict = self.scale_cuts[t]
-                    scale_cut_mask = {}
-                    sep_unmasked = self.spectrum_info[t]["separation"]
-                    for ii, i in enumerate(self.spectrum_info[t]["bins0"]):
-                        if self.spectrum_info[t]["use_cross"]:
-                            if field_types[t][0] == field_types[t][1]:
-                                bins1 = self.spectrum_info[t]["bins1"][ii:]
-                            else:
-                                bins1 = self.spectrum_info[t]["bins1"][:]
-                            for jj, j in enumerate(bins1):
-                                try:
-                                    sep_min, sep_max = scale_cut_dict[
-                                        "{}_{}".format(i, j)
-                                    ]
-                                    mask = (sep_min <= sep_unmasked) & (
-                                        sep_unmasked <= sep_max
-                                    )
-                                    scale_cut_mask["{}_{}".format(i, j)] = mask
-                                except:
-                                    raise ValueError(
-                                        "Scale cuts not provided for {} bin pair {},{}".format(
-                                            t, i, j
-                                        )
-                                    )
-                        else:
-                            try:
-                                sep_min, sep_max = scale_cut_dict["{}_{}".format(i, i)]
-                                mask = (sep_min <= sep_unmasked) & (
-                                    sep_unmasked <= sep_max
-                                )
-                                scale_cut_mask["{}_{}".format(i, i)] = mask
-                            except:
-                                raise ValueError(
-                                    "Scale cuts not provided for {} bin pair {},{}".format(
-                                        t, i, i
-                                    )
-                                )
+    def _ensure_covariance_info(self):
+        """Prompt interactively for any f_sky or noise terms missing from covariance_info.
+        Also ensures ell_eff and delta_ell are computed if not already set."""
+        if not hasattr(self, 'ell_eff') or self.ell_eff is None:
+            self._compute_ell_binning()
 
-                    self.spectrum_info[t]["scale_cut_masks"] = scale_cut_mask
+        if self.covariance_info is None:
+            self.covariance_info = {}
 
-                else:
-                    raise ValueError("No scale cuts specified for {}".format(t))
-        else:
-            warnings.warn("No scale cuts specified for any spectra!", UserWarning)
+        if ("f_sky" not in self.covariance_info):
+            for s in self.covariance_info:
+                try:
+                    f_sky = self.covariance_info[s]["f_sky"]
+                except KeyError:
+                    val = input("f_sky not found in config. Enter f_sky: ")
+                    self.covariance_info[s]["f_sky"] = float(val)
 
-            for t in self.spectrum_info:
-                self.spectrum_info[t]["scale_cut_masks"] = None
-
-        zbin_counter = {}
-        scale_mask = []
-        for t0 in self.spectrum_types:
-            zbin_counter[t0] = []
-            for zb0 in self.spectrum_info[t0]["bins0"]:
-                for zb1 in self.spectrum_info[t0]["bins1"]:
-                    if (zb0, zb1) in zbin_counter[t0]:
-                        continue
-
-                    idxi = np.where(
-                        (self.spectra["spectrum_type"] == t0.encode('utf-8'))
-                        & (self.spectra["zbin0"] == zb0)
-                        & (self.spectra["zbin1"] == zb1)
-                    )[0]
-
-                    try:
-                        start_idx = np.min(idxi)
-                    except ValueError:
-                        continue
-
-                    # mask scales
-                    if self.spectrum_info[t0]["scale_cut_masks"] is not None:
-                        mask_i = np.where(
-                            self.spectrum_info[t0]["scale_cut_masks"][
-                                "{}_{}".format(zb0, zb1)
-                            ]
-                        )[0]
-                    else:
-                        mask_i = np.arange(self.spectrum_info[t0]["n_dv_per_bin"])
-
-                    scale_mask.extend((mask_i + start_idx).tolist())
-
-        self.scale_mask = jnp.unique(jnp.array(scale_mask))
-        self.scale_mask.sort()
-        self.n_dv_masked = len(self.scale_mask)
-        self.measured_spectra = jnp.array(self.spectra["value"])
-
-    def load_covariance_matrix(self):
-        # Always need a covariance matrix. This should be a text file
-        # with columns specifying the two data vector types, and four redshift
-        # bin indices for each element, as well as a column for the elements
-        # themselves
-
-        cov_raw = self.data_vector_info["covariance"][:]
-        cov_raw = cov_raw.reshape(
-            int(cov_raw.shape[0] ** 0.5), int(cov_raw.shape[0] ** 0.5)
-        )
-
-        cov_slice = cov_raw[0, :]
-        idxi = np.zeros(len(self.spectra), dtype=int)
-
-        for i in range(self.n_dv):
-            idx = np.where(
-                (
-                    (cov_slice["spectrum_type1"] == self.spectra[i]["spectrum_type"])
-                    & (cov_slice["zbin10"] == self.spectra[i]["zbin0"])
-                    & (cov_slice["zbin11"] == self.spectra[i]["zbin1"])
-                    & (cov_slice["separation1"] == self.spectra[i]["separation"])
-                )
-            )[0]
-            if len(idx) > 1:
-                raise (ValueError)
-            elif len(idx) < 1:
-                raise (
-                    ValueError(
-                        "No matching cov entry for {}, {}, {}, {}".format(
-                            self.spectra[i]["spectrum_type"],
-                            self.spectra[i]["zbin0"],
-                            self.spectra[i]["zbin1"],
-                            self.spectra[i]["separation"],
-                        )
+        for t in self.spectrum_info:
+            if t not in self.covariance_info:
+                self.covariance_info[t] = {}
+            for (b0, b1) in self.spectrum_info[t]["bin_pairs"]:
+                key = f"{b0}_{b1}"
+                entry = self.covariance_info[t].get(key, {})
+                if "noise" not in entry:
+                    val = input(
+                        f"noise for {t} bin pair ({b0}, {b1}) not found in config. Enter noise: "
                     )
-                )
+                    entry["noise"] = float(val)
+                    self.covariance_info[t][key] = entry
 
-            idxi[i] = idx[0]
+    def _lookup_spectrum(self, spec, za, zb, model_spectra):
+        """Look up a spectrum value from model_spectra dict or observed data."""
+        if model_spectra is not None and (spec, za, zb) in model_spectra:
+            return model_spectra[(spec, za, zb)]
+        s = self.spectra["value"][
+            (self.spectra["spectrum_type"] == spec.encode('utf-8'))
+            & (self.spectra["zbin0"] == za)
+            & (self.spectra["zbin1"] == zb)
+        ]
+        if len(s)>0:
+            return s
+        else:
+            raise(ValueError(f"No spectrum {spec} with zbin comination {za}, {zb} found in model spectra or observed data."))
 
-        covidx, covidy = np.meshgrid(idxi, idxi, indexing="ij")
-        self.cov = cov_raw[covidx, covidy]
-        assert np.allclose(self.cov["value"], self.cov["value"].T, 1e-16)
+    def gaussian_variance(self, si, sj, z00, z01, z10, z11, model_spectra=None):
+        """Compute the diagonal Gaussian variance for a pair of spectrum blocks.
 
-        cov_scale_mask_i, cov_scale_mask_j = np.meshgrid(
-            self.scale_mask, self.scale_mask, indexing="ij"
-        )
-        self.cinv = jnp.linalg.inv(
-            self.cov["value"][cov_scale_mask_i, cov_scale_mask_j].reshape(
-                self.n_dv_masked, self.n_dv_masked
-            )
-        )
+        Args:
+            si: First spectrum type string.
+            sj: Second spectrum type string.
+            z00: First redshift bin of spectrum si.
+            z01: Second redshift bin of spectrum si.
+            z10: First redshift bin of spectrum sj.
+            z11: Second redshift bin of spectrum sj.
+            model_spectra: Optional dict of model spectra to use instead of observed.
 
-    #        if jnp.any(jnp.linalg.eigvals(self.cinv) < 0):
-    #            raise(ValueError('APS covariance matrix not PSD.'))
-
-    def gaussian_variance(self, si, sj, z00, z01, z10, z11):
+        Returns:
+            Array of variance values per ell bin.
+        """
         c0 = f"c_{covariance_field_types[si][0]}{covariance_field_types[sj][0]}"
         if c0 not in field_types:
             c0 = f"c_{covariance_field_types[sj][0]}{covariance_field_types[si][0]}"
@@ -548,28 +370,16 @@ class TwoPointSpectrum(DataVector):
                 covariance_field_types[sj][0],
             ],
         ):
-            if (za, zb) in self.spectrum_info[spec]["bin_pairs"]:
-                c_w_n = self.spectra["value"][
-                    (self.spectra["spectrum_type"] == spec)
-                    & (self.spectra["zbin0"] == za)
-                    & (self.spectra["zbin1"] == zb)
-                ] + float(self.covariance_info[spec][f"{za}_{zb}"]["noise"])
-            elif covariance_field_types[spec][0] == covariance_field_types[spec][1]:
-                c_w_n = self.spectra["value"][
-                    (self.spectra["spectrum_type"] == spec)
-                    & (self.spectra["zbin0"] == zb)
-                    & (self.spectra["zbin1"] == za)
-                ] + float(self.covariance_info[spec][f"{zb}_{za}"]["noise"])
-            elif f1 == "d":
-                c_w_n = self.spectra["value"][
-                    (self.spectra["spectrum_type"] == spec)
-                    & (self.spectra["zbin0"] == zb)
-                    & (self.spectra["zbin1"] == za)
-                ] + float(self.covariance_info[spec][f"{zb}_{za}"]["noise"])
-            else:
-                raise (
-                    ValueError(f"No spectrum {spec} with zbin comination {za}, {zb}")
-                )
+            try:
+                c_w_n = self._lookup_spectrum(spec, za, zb, model_spectra) \
+                        + float(self.covariance_info[spec][f"{za}_{zb}"]["noise"])
+            
+            except:
+                if f0 == f1:
+                    c_w_n = self._lookup_spectrum(spec, zb, za, model_spectra) \
+                        + float(self.covariance_info[spec][f"{zb}_{za}"]["noise"])
+                else:
+                    raise(ValueError(f"No spectrum {spec} with zbin comination {za}, {zb} or {zb}, {za}"))
 
             spec_w_n.append(c_w_n)
 
