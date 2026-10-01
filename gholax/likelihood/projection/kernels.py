@@ -104,16 +104,15 @@ class ProjectionKernels(LikelihoodModule):
                 for i in range(self.observed_data_vector.nz_d.shape[0]):
                     mi = self.lens_bin_mapping.get(i, i)
                     if k == "w_mag_dk":
-                        for j in range(self.observed_data_vector.nz_s.shape[0]):
-                            if (
-                                i
-                                in self.observed_data_vector.spectrum_info[
-                                    'c_dk'
-                                ]["bins0"]
-                            ):
-                                self.indexed_params[k].append(f"smag_{mi}")
-                            else:
-                                self.indexed_params[k].append("NA")  # returns zero
+                        if (
+                            i
+                            in self.observed_data_vector.spectrum_info[
+                                'c_dk'
+                            ]["bins0"]
+                        ):
+                            self.indexed_params[k].append(f"smag_{mi}")
+                        else:
+                            self.indexed_params[k].append("NA")  # returns zero
                     else:
                         if (
                             i
