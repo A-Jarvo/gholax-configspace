@@ -71,8 +71,7 @@ class Nx2PTCorrelationFunction(GaussianLikelihood):
                 if ft == "c_dd":
                     bins = list(fourier_spectrum_info[ft]["bins0"])
                     fourier_spectrum_info[ft]["bin_pairs"] = [(i, j) for i in bins for j in bins]
-                else:
-                    fourier_spectrum_types.append(ft)
+                fourier_spectrum_types.append(ft)  # always add, including c_dd
         
         # Update observed_data_vector for Limber/ProjectionKernels
         for ft in fourier_spectrum_types_limber:
@@ -82,14 +81,6 @@ class Nx2PTCorrelationFunction(GaussianLikelihood):
             if ft == "c_dd":
                 bins = list(fourier_spectrum_info[ft]["bins0"])
                 self.observed_data_vector.spectrum_info[ft]["bin_pairs"] = [(i, j) for i in bins for j in bins]
-        
-        
-        # Add dummy c_dd to satisfy RealSpaceBiasExpansion's hardcoded check
-        # without triggering p_gg computation
-        if "c_dd" not in fourier_spectrum_info:
-            fourier_spectrum_info["c_dd"] = {"use_cross": False, "bin_pairs": []}
-        if "c_dk" not in fourier_spectrum_info:
-            fourier_spectrum_info["c_dk"] = {"use_cross": False, "bin_pairs": []}
 
         self.configspace_spectrum_types = list(self.observed_data_vector.spectrum_types)
         # Update spectrum_types on data vector so ProjectionKernels computes the right kernels
@@ -209,7 +200,6 @@ class Nx2PTCorrelationFunction(GaussianLikelihood):
                     l_max=l_max,
                     **config_proj.get("Limber", {}),
                 ),
-                
                 LensingCounterterm(
                     self.observed_data_vector,
                     fourier_spectrum_types_limber,
