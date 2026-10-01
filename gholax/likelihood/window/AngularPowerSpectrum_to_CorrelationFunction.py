@@ -191,7 +191,6 @@ def G_posneg_bar(mu: jnp.array, P_l: jnp.array, dP_l: jnp.array, l_max: int):
     l_sub1_slice = slice(1,-2) # skip first element as it corresponds to l=0 and only use l>=1
     l_slice = slice(2, -1)
     l_add1_slice = slice(3, None)
-    assert not jnp.any(jnp.abs(mu) >= 1.0)
 
     P_diff = lambda P, l_slice: P[l_slice, theta_mins_slice] - P[l_slice, theta_maxs_slice]
     P_mu_diff = lambda P, l_slice: (mu[theta_mins_slice] * P[l_slice, theta_mins_slice]
