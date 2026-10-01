@@ -309,7 +309,9 @@ class ProjectionKernels(LikelihoodModule):
                 lensing_geom=lensing_geom,
             )
             if k in ["w_d_dk", "w_mag_dk"]:
-                w = w.reshape((self.n_dbins, self.n_sbins, -1))
+                if w.shape[0] == self.n_dbins * self.n_sbins:
+                    w = w.reshape((self.n_dbins, self.n_sbins, -1))
+                # else leave as (n_dbins, nz_proj)
 
             state[k] = w
 
