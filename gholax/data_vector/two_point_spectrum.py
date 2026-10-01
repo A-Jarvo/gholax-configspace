@@ -17,7 +17,7 @@ datavector_requires = {
     "xi_plus":  ["nz_s"],
     "xi_minus": ["nz_s"],
     "w_theta":  ["nz_d"],
-    "gamma_t":  ["nz_d", "nz_s"]
+    "gamma_t":  ["nz_d_dk", "nz_s"],
 }
 
 covariance_field_types = {
