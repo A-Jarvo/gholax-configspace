@@ -326,7 +326,7 @@ class RealSpaceBiasedTracerSpectra(LikelihoodModule):
             for j, k in enumerate(self.k):
                 pk_m[i, j] = boltz.pk(k * h, z) * h**3
 
-        state["p_11_real_space_bias_grid"] = pk_m
+        state["p_11_real_space_bias_grid"] = pk_m.T
 
         return state
 
