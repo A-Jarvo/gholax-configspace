@@ -192,6 +192,7 @@ theory:
 
   LinearGrowth:
     use_emulator: false
+    use_boltzmann: true
 
   RealSpaceMatterPowerSpectrum:
     use_emulator: false
