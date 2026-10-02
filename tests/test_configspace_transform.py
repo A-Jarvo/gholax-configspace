@@ -6,21 +6,30 @@ a real HDF5 file or full pipeline. Validates agaist pyccl.
 import pytest
 import sys
 import os
-from unittest.mock import MagicMock
 from jax import config
 from tests.conftest import W0WA_COSMO_PARAMS, requires_classy
 config.update("jax_enable_x64", True)
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 # ---- Mock heavy dependencies before any gholax imports ----
-sys.modules['h5py']                  = MagicMock()
-sys.modules['jax.scipy.integrate']   = MagicMock()
-sys.modules['jax.scipy.interpolate'] = MagicMock()
-sys.modules['mpi4py']                = MagicMock()
-sys.modules['spinosaurus']           = MagicMock()
-sys.modules['spinosaurus.cleft_fftw']= MagicMock()
-sys.modules['spinosaurus.density_shape_correlators_fftw'] = MagicMock()
-sys.modules['spinosaurus.shape_shape_correlators_fftw']   = MagicMock()
+import pytest
+from unittest.mock import MagicMock
+
+@pytest.fixture(autouse=True)
+def mock_heavy_deps(monkeypatch):
+    """Mock heavy dependencies that aren't needed for transform testing."""
+    mocks = {
+        'h5py': MagicMock(),
+        'jax.scipy.integrate': MagicMock(),
+        'jax.scipy.interpolate': MagicMock(),
+        'mpi4py': MagicMock(),
+        'spinosaurus': MagicMock(),
+        'spinosaurus.cleft_fftw': MagicMock(),
+        'spinosaurus.density_shape_correlators_fftw': MagicMock(),
+        'spinosaurus.shape_shape_correlators_fftw': MagicMock(),
+    }
+    for mod_name, mock in mocks.items():
+        monkeypatch.setitem(sys.modules, mod_name, mock)
 
 import numpy as np
 import jax.numpy as jnp
@@ -61,7 +70,7 @@ except ImportError:
 
 @requires_classy
 @pytest.mark.skipif(not pyccl_imported, reason="Requires pyccl")
-def test_transform_agaist_pyccl():
+def test_transform_agaist_pyccl(mock_heavy_deps):
     N_BINS  = 2
     N_THETA = 10
     N_ELL   = 500
@@ -218,7 +227,7 @@ def test_transform_agaist_pyccl():
     assert all_pass_ccl, "some transforms differed from pyccl reference"
 
 @pytest.mark.skipif(pyccl_imported, reason="skipped cause redundant with pyccl")
-def test_transform_no_reference():
+def test_transform_no_reference(mock_heavy_deps):
     N_BINS  = 2
     N_THETA = 10
     N_ELL   = 500

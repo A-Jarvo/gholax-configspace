@@ -197,7 +197,7 @@ for ii in range(n_dv):
             cov[ii, jj]["value"] = (1.0 * abs(spectra[ii]["value"]))**2 + 1e-30
 
 # ---- Write HDF5 ----
-outfile = "examples/dummy_configspace_dv.h5"
+outfile = "example_configs/dummy_configspace_dv.h5"
 with h5py.File(outfile, "w") as f:
     f.create_dataset("spectra",    data=spectra)
     f.create_dataset("covariance", data=cov.flatten())

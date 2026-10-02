@@ -168,7 +168,7 @@ likelihood:
     zmax_proj: 1.5
     use_boltzmann: true
     data_vector:
-      data_vector_info_filename: examples/dummy_configspace_dv.h5
+      data_vector_info_filename: example_configs/dummy_configspace_dv.h5
       scale_cuts: null
       dummy_cov: false
       zeff_weighting: false
@@ -192,6 +192,7 @@ theory:
 
   LinearGrowth:
     use_emulator: false
+    use_boltzmann: true
 
   RealSpaceMatterPowerSpectrum:
     use_emulator: false

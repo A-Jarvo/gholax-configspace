@@ -22,7 +22,7 @@ import yaml
 
 os.environ["JAX_PLATFORMS"] = "cpu"
 
-config_path = "examples/config_configspace_emulator.yaml"
+config_path = "example_configs/config_configspace_emulator.yaml"
 if not os.path.exists(config_path):
     print(f"Config file not found: {config_path}")
     print("Run from the repo root directory.")

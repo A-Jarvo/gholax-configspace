@@ -127,7 +127,7 @@ likelihood:
     nk: 200
     use_boltzmann: false
     data_vector:
-      data_vector_info_filename: examples/dummy_configspace_dv.h5
+      data_vector_info_filename: example_configs/dummy_configspace_dv.h5
       scale_cuts: null
       dummy_cov: false
       zeff_weighting: true
