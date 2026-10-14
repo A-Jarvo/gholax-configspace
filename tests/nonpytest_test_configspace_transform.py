@@ -8,7 +8,7 @@ from realistic weak lensing and galaxy clustering C_ells.
 All four transforms (w, gamma_t, xi+, xi-) should agree to within 10%.
 
 Run from repo root with:
-    python tests/test_configspace_transform.py
+    python tests/nonpytest_test_configspace_transform.py
 
 Requires pyccl for the reference comparison (optional but recommended).
 """
