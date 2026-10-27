@@ -22,7 +22,7 @@ class AngularPowerSpectrum_to_CorrelationFunction(LikelihoodModule):
         self.spectrum_info = spectrum_info
         self.n_ell = n_ell
         self.l_max = l_max
-        self.ell = jnp.logspace(jnp.log10(2), jnp.log10(self.l_max), self.n_ell)
+        self.ell = jnp.logspace(jnp.log10(10), jnp.log10(self.l_max), self.n_ell)
         self.cl_tag = config.get("cl_tag", "_mbias")
         self.all_spectra = {}
         self.output_requirements = {}
@@ -76,7 +76,9 @@ class AngularPowerSpectrum_to_CorrelationFunction(LikelihoodModule):
 
         for (i,j) in self.all_spectra.get("w_theta", []):
             if i == j:
-                C_dd_ii = state[f"c_dd{self.cl_tag}"][i, :]
+                n_bins = self.observed_data_vector.spectrum_info["w_theta"]["n_bins1_tot"]
+                flat_idx = i * n_bins + j
+                C_dd_ii = state[f"c_dd{self.cl_tag}"][flat_idx, :]
                 C_dd_interp = jnp.interp(ell_w, self.ell, C_dd_ii)
                 w_theta_ii = jnp.sum(w_kernel * C_dd_interp[:, jnp.newaxis], axis=0)
                 state[f"w_{i}_{i}_obs"] = w_theta_ii
