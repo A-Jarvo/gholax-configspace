@@ -116,7 +116,7 @@ likelihood:
   Nx2PTCorrelationFunction:
     params: {}
     analytic_marginalization: false
-    zmin_proj: 0.1
+    zmin_proj: 0.001
     zmax_proj: 2.0
     nz_proj: 200
     zmin_pk: 0.0001
@@ -127,8 +127,48 @@ likelihood:
     nk: 200
     use_boltzmann: false
     data_vector:
-      data_vector_info_filename: example_configs/dummy_configspace_dv.h5
-      scale_cuts: null
+      data_vector_info_filename: example_configs/dv_pyccl_noiseless.h5
+      scale_cuts:
+        w_theta:
+          '0_0':
+          - 0.008
+          - 0.083
+          '1_1':
+          - 0.008
+          - 0.083
+        gamma_t:
+          '0_0':
+          - 0.007
+          - 0.085
+          '0_1':
+          - 0.007
+          - 0.085
+          '1_0':
+          - 0.007
+          - 0.085
+          '1_1':
+          - 0.007
+          - 0.085
+        xi_plus:
+          '0_0':
+          - 0.008
+          - 0.078
+          '0_1':
+          - 0.008
+          - 0.078
+          '1_1':
+          - 0.008
+          - 0.078
+        xi_minus:
+          '0_0':
+          - 0.008
+          - 0.078
+          '0_1':
+          - 0.008
+          - 0.078
+          '1_1':
+          - 0.008
+          - 0.078
       dummy_cov: false
       zeff_weighting: true
       spectrum_info:
@@ -210,6 +250,15 @@ projection:
 
 sampler:
   NUTS:
-    n_steps_warmup: 50
-    n_steps: 10
+    adaptive_warmup_max_steps: 400
+    n_steps_min: 600
+    warmup:
+      diagonal_mass_matrix: false
+      n_steps: 500
+      algorithm: "adaptive_window"
+    n_incr: 50
+    n_chains: 4
+    target_r_minus_one: 0.01
     random_start: true
+    minimize_and_sample: false
+    n_steps_min: 600
