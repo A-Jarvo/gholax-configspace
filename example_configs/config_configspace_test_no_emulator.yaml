@@ -164,12 +164,52 @@ likelihood:
   Nx2PTCorrelationFunction:
     params: {}
     analytic_marginalization: false
-    zmin_proj: 0.1
+    zmin_proj: 0.001
     zmax_proj: 1.5
     use_boltzmann: true
     data_vector:
       data_vector_info_filename: example_configs/dummy_configspace_dv.h5
-      scale_cuts: null
+      scale_cuts:
+        w_theta:
+          '0_0':
+          - 0.008
+          - 0.083
+          '1_1':
+          - 0.008
+          - 0.083
+        gamma_t:
+          '0_0':
+          - 0.007
+          - 0.085
+          '0_1':
+          - 0.007
+          - 0.085
+          '1_0':
+          - 0.007
+          - 0.085
+          '1_1':
+          - 0.007
+          - 0.085
+        xi_plus:
+          '0_0':
+          - 0.008
+          - 0.078
+          '0_1':
+          - 0.008
+          - 0.078
+          '1_1':
+          - 0.008
+          - 0.078
+        xi_minus:
+          '0_0':
+          - 0.008
+          - 0.078
+          '0_1':
+          - 0.008
+          - 0.078
+          '1_1':
+          - 0.008
+          - 0.078
       dummy_cov: false
       zeff_weighting: false
       spectrum_info:
