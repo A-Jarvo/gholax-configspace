@@ -1,0 +1,102 @@
+[
+ {
+  "label": "seed1",
+  "prefix": "chains/pyccl5_seed1",
+  "truth": {
+   "As": 2.107,
+   "omch2": 0.11923,
+   "b_1_0": 1.5,
+   "b_1_1": 1.7
+  }
+ },
+ {
+  "label": "seed2",
+  "prefix": "chains/pyccl5_seed2",
+  "truth": {
+   "As": 2.107,
+   "omch2": 0.11923,
+   "b_1_0": 1.5,
+   "b_1_1": 1.7
+  }
+ },
+ {
+  "label": "seed3",
+  "prefix": "chains/pyccl5_seed3",
+  "truth": {
+   "As": 2.107,
+   "omch2": 0.11923,
+   "b_1_0": 1.5,
+   "b_1_1": 1.7
+  }
+ },
+ {
+  "label": "seed4",
+  "prefix": "chains/pyccl5_seed4",
+  "truth": {
+   "As": 2.107,
+   "omch2": 0.11923,
+   "b_1_0": 1.5,
+   "b_1_1": 1.7
+  }
+ },
+ {
+  "label": "seed5",
+  "prefix": "chains/pyccl5_seed5",
+  "truth": {
+   "As": 2.107,
+   "omch2": 0.11923,
+   "b_1_0": 1.5,
+   "b_1_1": 1.7
+  }
+ },
+ {
+  "label": "seed6",
+  "prefix": "chains/pyccl5_seed6",
+  "truth": {
+   "As": 2.107,
+   "omch2": 0.11923,
+   "b_1_0": 1.5,
+   "b_1_1": 1.7
+  }
+ },
+ {
+  "label": "seed7",
+  "prefix": "chains/pyccl5_seed7",
+  "truth": {
+   "As": 2.107,
+   "omch2": 0.11923,
+   "b_1_0": 1.5,
+   "b_1_1": 1.7
+  }
+ },
+ {
+  "label": "seed8",
+  "prefix": "chains/pyccl5_seed8",
+  "truth": {
+   "As": 2.107,
+   "omch2": 0.11923,
+   "b_1_0": 1.5,
+   "b_1_1": 1.7
+  }
+ },
+ {
+  "label": "seed9",
+  "prefix": "chains/pyccl5_seed9",
+  "truth": {
+   "As": 2.107,
+   "omch2": 0.11923,
+   "b_1_0": 1.5,
+   "b_1_1": 1.7
+  }
+ },
+ {
+  "label": "seed10",
+  "prefix": "chains/pyccl5_seed10",
+  "truth": {
+   "As": 2.107,
+   "omch2": 0.11923,
+   "b_1_0": 1.5,
+   "b_1_1": 1.7
+  }
+ }
+]

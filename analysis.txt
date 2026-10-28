@@ -1,0 +1,95 @@
+
+=== seed1  (2400 samples) ===
+param         truth       mean        std        z  q_sigma
+As            2.107     2.0476     0.0275    -2.16     2.19
+b_1_0           1.5     1.5005    0.00922    +0.06     0.08
+b_1_1           1.7     1.7194     0.0125    +1.55     1.53
+omch2       0.11923    0.11999   0.000773    +0.98     1.01
+Joint (4 params): Mahalanobis^2 = 13.19, p = 0.010, equivalent = 2.56 sigma
+
+=== seed2  (2400 samples) ===
+param         truth       mean        std        z  q_sigma
+As            2.107     2.0991     0.0305    -0.26     0.25
+b_1_0           1.5     1.4964    0.00944    -0.38     0.36
+b_1_1           1.7     1.7058     0.0124    +0.47     0.46
+omch2       0.11923    0.11933   0.000827    +0.12     0.13
+Joint (4 params): Mahalanobis^2 = 0.65, p = 0.957, equivalent = 0.05 sigma
+
+=== seed3  (3400 samples) ===
+param         truth       mean        std        z  q_sigma
+As            2.107     2.0698     0.0303    -1.23     1.25
+b_1_0           1.5     1.4914    0.00957    -0.90     0.89
+b_1_1           1.7     1.7116     0.0128    +0.91     0.93
+omch2       0.11923    0.12002   0.000837    +0.95     0.96
+Joint (4 params): Mahalanobis^2 = 4.22, p = 0.377, equivalent = 0.88 sigma
+
+=== seed4  (2400 samples) ===
+param         truth       mean        std        z  q_sigma
+As            2.107     2.1204     0.0314    +0.43     0.44
+b_1_0           1.5     1.4876    0.00982    -1.27     1.31
+b_1_1           1.7     1.6969     0.0128    -0.24     0.26
+omch2       0.11923    0.11873   0.000836    -0.60     0.59
+Joint (4 params): Mahalanobis^2 = 2.06, p = 0.725, equivalent = 0.35 sigma
+
+=== seed5  (2400 samples) ===
+param         truth       mean        std        z  q_sigma
+As            2.107     2.0924     0.0282    -0.52     0.53
+b_1_0           1.5     1.4879    0.00968    -1.25     1.25
+b_1_1           1.7     1.6842     0.0121    -1.30     1.31
+omch2       0.11923    0.11963   0.000771    +0.52     0.50
+Joint (4 params): Mahalanobis^2 = 5.91, p = 0.206, equivalent = 1.27 sigma
+
+=== seed6  (2400 samples) ===
+param         truth       mean        std        z  q_sigma
+As            2.107      2.133     0.0292    +0.89     0.89
+b_1_0           1.5     1.4902    0.00933    -1.05     1.04
+b_1_1           1.7     1.6899     0.0125    -0.81     0.80
+omch2       0.11923     0.1185    0.00078    -0.93     0.96
+Joint (4 params): Mahalanobis^2 = 1.66, p = 0.797, equivalent = 0.26 sigma
+
+=== seed7  (3200 samples) ===
+param         truth       mean        std        z  q_sigma
+As            2.107     2.0761     0.0298    -1.04     1.04
+b_1_0           1.5     1.4971    0.00943    -0.31     0.33
+b_1_1           1.7      1.691     0.0126    -0.71     0.70
+omch2       0.11923    0.11967   0.000828    +0.54     0.53
+Joint (4 params): Mahalanobis^2 = 5.81, p = 0.214, equivalent = 1.24 sigma
+
+=== seed8  (2400 samples) ===
+param         truth       mean        std        z  q_sigma
+As            2.107     2.1206     0.0309    +0.44     0.42
+b_1_0           1.5     1.5082     0.0094    +0.88     0.86
+b_1_1           1.7     1.6942     0.0125    -0.46     0.44
+omch2       0.11923    0.11865   0.000831    -0.70     0.70
+Joint (4 params): Mahalanobis^2 = 2.13, p = 0.711, equivalent = 0.37 sigma
+
+=== seed9  (2400 samples) ===
+param         truth       mean        std        z  q_sigma
+As            2.107     2.0951     0.0307    -0.39     0.44
+b_1_0           1.5     1.4866     0.0097    -1.38     1.39
+b_1_1           1.7     1.7042     0.0129    +0.32     0.34
+omch2       0.11923    0.11949   0.000829    +0.32     0.36
+Joint (4 params): Mahalanobis^2 = 3.04, p = 0.551, equivalent = 0.60 sigma
+
+=== seed10  (2440 samples) ===
+param         truth       mean        std        z  q_sigma
+As            2.107     2.0414     0.0305    -2.15     2.12
+b_1_0           1.5     1.4857    0.00965    -1.48     1.47
+b_1_1           1.7     1.7286     0.0131    +2.18     2.20
+omch2       0.11923    0.12026   0.000862    +1.20     1.22
+Joint (4 params): Mahalanobis^2 = 19.45, p = 0.001, equivalent = 3.41 sigma
+
+=== Aggregate over 10 runs (expect mean 0 +/- 0.32, std ~1) ===
+param      mean z    std z
+As          -0.60     1.05
+b_1_0       -0.71     0.76
+b_1_1       +0.19     1.11
+omch2       +0.24     0.75
+
+=== Hotelling T^2 on per-run z vectors (N=10) ===
+As       mean z = -0.60 +/- 0.33  (-1.8 sigma)
+b_1_0    mean z = -0.71 +/- 0.24  (-3.0 sigma)
+b_1_1    mean z = +0.19 +/- 0.35  (+0.5 sigma)
+omch2    mean z = +0.24 +/- 0.24  (+1.0 sigma)
+all 4 params: T^2 = 43.00, F(4,6) p = 0.018
+As-omch2 pair: T^2 = 8.91, F(2,8) p = 0.064
