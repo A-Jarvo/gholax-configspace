@@ -35,9 +35,6 @@ This is equipped with a jupyter kernel named `gholax` that you can use with NERS
 Analogously, assuming you have `mamba` installed, you can run `sh setup_env.sh` and it will build a functioning environment with `gholax` installed. 
 The environment can then be activated by calling `mamba activate gholax`. 
 
-## Config-Space Likelihood
-
-
 ## Running the tests
 From the repository root, with the `gholax` environment activated:
 
